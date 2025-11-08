@@ -1,10 +1,4 @@
-/* ---------- inline SVG icons ---------- */
-function MarketIcon(){ return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 3v18h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path><path d="M7 13l3-4 4 6 3-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></svg>); }
-function PortfolioIcon(){ return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>); }
-function DashboardIcon(){ return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/></svg>); }
-function CreateIcon(){ return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>); }
-function LeaderboardIcon(){ return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M8 21V11M12 21V3M16 21v-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>); }
-function SettingsIcon(){ return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M12 2v2m0 16v2M4.93import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import * as api from '../api';
 
 /**
@@ -121,12 +115,12 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
         </div>
 
         <nav className="sidebar-nav">
-          <NavItem active={view==='market'} label="Market" onClick={()=>navigate('market')} icon={MarketIcon} />
-          <NavItem active={view==='portfolio'} label="Portfolio" onClick={()=>navigate('portfolio')} icon={PortfolioIcon} />
-          <NavItem active={view==='dashboard'} label="Dashboard" onClick={()=>navigate('dashboard')} icon={DashboardIcon} />
-          <NavItem active={view==='create'} label="Create Coin" onClick={()=>navigate('create')} icon={CreateIcon} />
-          <NavItem active={view==='leaderboard'} label="Leaderboard" onClick={()=>navigate('leaderboard')} icon={LeaderboardIcon} />
-          <NavItem active={view==='settings'} label="Settings" onClick={()=>navigate('settings')} icon={SettingsIcon} />
+          <NavItem active={view==='market'} label="Market" onClick={()=>navigate('market')} icon="📈" />
+          <NavItem active={view==='portfolio'} label="Portfolio" onClick={()=>navigate('portfolio')} icon="💼" />
+          <NavItem active={view==='dashboard'} label="Dashboard" onClick={()=>navigate('dashboard')} icon="📊" />
+          <NavItem active={view==='create'} label="Create Coin" onClick={()=>navigate('create')} icon="➕" />
+          <NavItem active={view==='leaderboard'} label="Leaderboard" onClick={()=>navigate('leaderboard')} icon="🏆" />
+          <NavItem active={view==='settings'} label="Settings" onClick={()=>navigate('settings')} icon="⚙️" />
           
           {/* Admin Panel - só aparece se is_admin = true */}
           {me && me.is_admin && (
@@ -134,7 +128,7 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
               active={view==='admin'} 
               label="Admin Panel" 
               onClick={()=>navigate('admin')} 
-              icon={AdminIcon}
+              icon="👑"
               className="admin-item"
             />
           )}
@@ -178,26 +172,15 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
   );
 }
 
-/* ---------- small components & icons ---------- */
-
-function NavItem({ active, label, onClick, icon: Icon, className = '' }) {
+/* ---------- NavItem component ---------- */
+function NavItem({ active, label, onClick, icon, className = '' }) {
   return (
     <button
       className={`nav-item ${active ? 'active' : ''} ${className}`}
       onClick={onClick}
     >
-      <span className="nav-icon">{ Icon ? <Icon /> : null }</span>
+      <span className="nav-icon">{icon}</span>
       <span className="nav-label">{label}</span>
     </button>
   );
 }
-
-/* ---------- inline SVG icons ---------- */
-function MarketIcon(){ return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 3v18h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path><path d="M7 13l3-4 4 6 3-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></svg>); }
-function PortfolioIcon(){ return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>); }
-function DashboardIcon(){ return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5"/></svg>); }
-function CreateIcon(){ return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>); }
-function LeaderboardIcon(){ return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M8 21V11M12 21V3M16 21v-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>); }
-function GiftIcon(){ return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="5" stroke="currentColor" strokeWidth="1.4"/><path d="M12 7v10" stroke="currentColor" strokeWidth="1.4"/><path d="M7 7a3 3 0 0 1 5-2 3 3 0 0 1 5 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>); }
-function SettingsIcon(){ return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>); }
-function AdminIcon(){ return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>); }
