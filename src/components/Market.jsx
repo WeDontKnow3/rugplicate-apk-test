@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import * as api from '../api';
 
+const API_BASE = import.meta.env.VITE_API_BASE || '';
+
 export default function Market({ onOpenCoin, onActionComplete }) {
   const [coins, setCoins] = useState([]);
   const [usdBuy, setUsdBuy] = useState({});
@@ -32,6 +34,14 @@ export default function Market({ onOpenCoin, onActionComplete }) {
   function fmtVol(v) {
     if (!v) return '$0';
     return `$${Number(v).toFixed(2)}`;
+  }
+
+  function getLogoUrl(c) {
+    if (!c || !c.logo) return null;
+    if (c.logo.startsWith('http') || c.logo.startsWith('//')) return c.logo;
+    // relative path like "/uploads/coins/..."
+    if (API_BASE) return API_BASE.replace(/\/$/, '') + c.logo;
+    return c.logo;
   }
 
   async function buy(symbol) {
@@ -68,46 +78,58 @@ export default function Market({ onOpenCoin, onActionComplete }) {
 
       <div className="market-list">
         {coins.length === 0 && !loadingList && <div className="card muted">Nenhuma coin disponível.</div>}
-        {coins.map(c => (
-          <div key={c.symbol} className="market-item fade-in">
-            <div className="market-left">
-              <button className="link-btn" onClick={() => onOpenCoin(c.symbol)}>{c.symbol}</button>
-              <div className="name">{c.name}</div>
-              <div className="muted" style={{marginTop:6}}>
-                Pool: {Number(c.liquidity_base || 0).toFixed(4)} base • {Number(c.liquidity_token || 0).toLocaleString()} token
+        {coins.map(c => {
+          const logoUrl = getLogoUrl(c);
+          return (
+            <div key={c.symbol} className="market-item fade-in">
+              <div className="market-left" style={{display:'flex', alignItems:'center', gap:12}}>
+                {logoUrl ? (
+                  <img src={logoUrl} alt={c.symbol} style={{width:48,height:48,objectFit:'cover',borderRadius:8}} />
+                ) : (
+                  <div style={{width:48,height:48,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:8,background:'linear-gradient(135deg,var(--accent),var(--accent-2))',fontWeight:800}}>
+                    {c.symbol.slice(0,3)}
+                  </div>
+                )}
+                <div style={{display:'flex',flexDirection:'column'}}>
+                  <button className="link-btn" onClick={() => onOpenCoin(c.symbol)}>{c.symbol}</button>
+                  <div className="name">{c.name}</div>
+                  <div className="muted" style={{marginTop:6}}>
+                    Pool: {Number(c.liquidity_base || 0).toFixed(4)} base • {Number(c.liquidity_token || 0).toLocaleString()} token
+                  </div>
+                </div>
+              </div>
+
+              <div className="market-mid">
+                <div className="small muted">Price</div>
+                <div style={{fontWeight:800}}>{c.price === null ? '—' : `$${Number(c.price).toFixed(8)}`}</div>
+
+                <div style={{marginTop:6}}>
+                  <span className={c.change24h > 0 ? 'flash-up' : (c.change24h < 0 ? 'flash-down' : '')} style={{fontWeight:700}}>
+                    {fmtPercent(c.change24h)}
+                  </span>
+                  <div className="small muted">24h vol {fmtVol(c.volume24h)}</div>
+                </div>
+              </div>
+
+              <div className="market-right">
+                <input
+                  className="small-input"
+                  value={usdBuy[c.symbol] || ''}
+                  onChange={e => setUsdBuy({...usdBuy, [c.symbol]: e.target.value})}
+                  placeholder="USD"
+                  inputMode="decimal"
+                />
+                <button
+                  className="btn"
+                  onClick={() => buy(c.symbol)}
+                  disabled={loadingSymbol && loadingSymbol !== c.symbol}
+                >
+                  {loadingSymbol === c.symbol ? 'Buying...' : 'Buy'}
+                </button>
               </div>
             </div>
-
-            <div className="market-mid">
-              <div className="small muted">Price</div>
-              <div style={{fontWeight:800}}>{c.price === null ? '—' : `$${Number(c.price).toFixed(8)}`}</div>
-
-              <div style={{marginTop:6}}>
-                <span className={c.change24h > 0 ? 'flash-up' : (c.change24h < 0 ? 'flash-down' : '')} style={{fontWeight:700}}>
-                  {fmtPercent(c.change24h)}
-                </span>
-                <div className="small muted">24h vol {fmtVol(c.volume24h)}</div>
-              </div>
-            </div>
-
-            <div className="market-right">
-              <input
-                className="small-input"
-                value={usdBuy[c.symbol] || ''}
-                onChange={e => setUsdBuy({...usdBuy, [c.symbol]: e.target.value})}
-                placeholder="USD"
-                inputMode="decimal"
-              />
-              <button
-                className="btn"
-                onClick={() => buy(c.symbol)}
-                disabled={loadingSymbol && loadingSymbol !== c.symbol}
-              >
-                {loadingSymbol === c.symbol ? 'Buying...' : 'Buy'}
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
