@@ -189,10 +189,10 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
 
       <aside className={`sidebar ${open ? 'open' : 'closed'}`} aria-expanded={open}>
         <div className="sidebar-top">
-          <div className="logo">CS</div>
+          <div className="logo">ZT</div>
           <div className="sidebar-title">
-            <div className="header-title">CoinSim</div>
-            <div className="header-sub">AMM Simulator</div>
+            <div className="header-title">RUGPLICATE</div>
+            <div className="header-sub">by zt01</div>
           </div>
         </div>
 
@@ -212,14 +212,14 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
         {/* ---------------- Live trades panel ---------------- */}
         <div className="live-trades-card" style={{ marginTop: 10, marginBottom: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div style={{ fontWeight: 800 }}>Live Trades</div>
-            <div style={{ fontSize: 12, color: '#94a3b8' }}>{WS_URL ? 'connected' : 'no feed'}</div>
+            <div style={{ fontWeight: 800 }}>Live Trades (offline)</div>
+            <div style={{ fontSize: 12, color: '#94a3b8' }}>{WS_URL ? 'disconnected' : 'no feed'}</div>
           </div>
 
           {WS_URL ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {trades.length === 0 ? (
-                <div className="muted">Waiting for trades...</div>
+                <div className="muted">websocket not working rn lol</div>
               ) : (
                 trades.map((t, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
