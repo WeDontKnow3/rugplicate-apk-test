@@ -15,13 +15,13 @@ let animId = 1;
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [view, setView] = useState('market'); // market | dashboard | create | detail | portfolio | leaderboard | admin
+  const [view, setView] = useState('market'); // market | dashboard | create | detail | portfolio | leaderboard | admin | settings | promos
   const [selectedCoin, setSelectedCoin] = useState(null);
   const [balance, setBalance] = useState(null);
   const [moneyAnims, setMoneyAnims] = useState([]); // {id, amount, type}
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Carrega perfil (user + balance)
+  // Load profile (user + balance)
   async function loadMe() {
     try {
       const res = await api.getMe();
@@ -65,7 +65,7 @@ export default function App() {
     }, 1100);
   }
 
-  // função passada para filhos — quando eles fazem trade/ações, chamam essa função
+  // function passed to children — when they complete actions (trades, create, redeem), they call this
   // accepts { keepView, animate: { amount, type } }
   async function handleActionComplete(opts = {}) {
     if (opts.animate) {
@@ -83,10 +83,10 @@ export default function App() {
 
   return (
     <div className="app-wrapper">
-      {/* SIDEBAR usando componente separado */}
-      <Sidebar 
-        view={view} 
-        onNavigate={handleNavigate} 
+      {/* SIDEBAR (separate component) */}
+      <Sidebar
+        view={view}
+        onNavigate={handleNavigate}
         onLogout={onLogout}
         open={sidebarOpen}
         setOpen={setSidebarOpen}
@@ -96,9 +96,9 @@ export default function App() {
       <div className="main-content">
         {/* TOPBAR */}
         <header className="topbar">
-          <button 
-            className={`hamburger ${sidebarOpen ? 'open' : ''}`} 
-            onClick={() => setSidebarOpen(s => !s)} 
+          <button
+            className={`hamburger ${sidebarOpen ? 'open' : ''}`}
+            onClick={() => setSidebarOpen(s => !s)}
             aria-label="Toggle menu"
           >
             <span></span>
@@ -108,15 +108,15 @@ export default function App() {
 
           <div className="topbar-center">
             <h1 className="page-title">
-              {view === 'market' && '📈 Market'}
-              {view === 'portfolio' && '💼 Portfolio'}
-              {view === 'dashboard' && '📊 Dashboard'}
-              {view === 'create' && '➕ Create Coin'}
-              {view === 'detail' && `🪙 ${selectedCoin}`}
-              {view === 'leaderboard' && '🏆 Leaderboard'}
-              {view === 'settings' && '⚙️ Settings'}
-              {view === 'admin' && '⚙️ Admin Panel'}
-              {view === 'promos' && '🎁 Promos'}
+              {view === 'market' && 'Market'}
+              {view === 'portfolio' && 'Portfolio'}
+              {view === 'dashboard' && 'Dashboard'}
+              {view === 'create' && 'Create Coin'}
+              {view === 'detail' && (selectedCoin ? `Coin: ${selectedCoin}` : 'Coin')}
+              {view === 'leaderboard' && 'Leaderboard'}
+              {view === 'settings' && 'Settings'}
+              {view === 'admin' && 'Admin Panel'}
+              {view === 'promos' && 'Promos'}
             </h1>
           </div>
 
@@ -125,10 +125,10 @@ export default function App() {
               {user ? `${Number(balance || 0).toFixed(2)}` : '—'}
             </div>
 
-            {/* Botão de Logout */}
+            {/* Logout button */}
             {user && (
               <button className="logout-btn-topbar" onClick={onLogout} title="Logout">
-                <span className="logout-icon">🚪</span>
+                <span className="logout-icon">⎋</span>
                 <span className="logout-text">Logout</span>
               </button>
             )}
@@ -145,35 +145,35 @@ export default function App() {
         {/* PAGE CONTENT */}
         <main className="page-content">
           {!user && <Auth onLogin={onLogin} />}
-          
+
           {user && view === 'market' && (
             <Market
-              onOpenCoin={(s)=>{ setSelectedCoin(s); setView('detail'); }}
+              onOpenCoin={(s) => { setSelectedCoin(s); setView('detail'); }}
               onActionComplete={handleActionComplete}
             />
           )}
-          
+
           {user && view === 'dashboard' && (
             <Dashboard onActionComplete={handleActionComplete} />
           )}
-          
+
           {user && view === 'create' && (
-            <CreateCoin 
-              onCreated={(opts) => { 
-                setView('market'); 
-                handleActionComplete({ keepView: true, ...opts }); 
-              }} 
+            <CreateCoin
+              onCreated={(opts) => {
+                setView('market');
+                handleActionComplete({ keepView: true, ...opts });
+              }}
             />
           )}
-          
+
           {user && view === 'detail' && selectedCoin && (
-            <CoinDetail 
-              symbol={selectedCoin} 
-              onBack={() => setView('market')} 
-              onActionComplete={handleActionComplete} 
+            <CoinDetail
+              symbol={selectedCoin}
+              onBack={() => setView('market')}
+              onActionComplete={handleActionComplete}
             />
           )}
-          
+
           {user && view === 'portfolio' && (
             <Portfolio onActionComplete={handleActionComplete} />
           )}
@@ -193,7 +193,7 @@ export default function App() {
 
         {/* FOOTER */}
         <footer className="app-footer">
-          <small>Simulador educacional — não use com dinheiro real.</small>
+          <small>Educational simulator — do not use real money.</small>
         </footer>
       </div>
     </div>
