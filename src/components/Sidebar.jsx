@@ -1,75 +1,75 @@
+n className="nav-label">{label}</span>
+    </button>
+  );
+}
 import React, { useEffect, useState, useRef } from 'react';
 import * as api from '../api';
 
 /**
- * Sidebar.jsx
+ * Sidebar.jsx (EN)
+ * - Lightweight, responsive sidebar
+ * - Shows user info, balance and tokens count
+ * - Polls /api/me every few seconds when visible
+ * - Uses simple monochrome glyphs instead of colorful emoji
  *
  * Props:
- * - view: current view string (e.g. 'market', 'portfolio', 'leaderboard', 'admin', 'create')
+ * - view: current view string (e.g. 'market', 'portfolio', ...)
  * - onNavigate(view) : function called when a nav item is clicked
  * - onLogout() : optional callback when user logs out
+ * - open: boolean (mobile open state)
+ * - setOpen: function to control mobile open state
  */
+
 export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
   const [me, setMe] = useState(null);
-  const [loadingMe, setLoadingMe] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [balanceAnim, setBalanceAnim] = useState(null); // 'up'|'down'|null
   const prevBalanceRef = useRef(null);
   const pollRef = useRef(null);
 
-  // helper navigate fallback
   function navigate(to) {
-    if (onNavigate && typeof onNavigate === 'function') {
-      onNavigate(to);
-    } else {
-      window.location.hash = '#' + to;
-    }
-    // close on mobile
-    if (window.innerWidth < 900) {
-      setOpen(false);
-    }
+    if (onNavigate && typeof onNavigate === 'function') onNavigate(to);
+    else window.location.hash = '#' + to;
+
+    if (window.innerWidth < 900 && typeof setOpen === 'function') setOpen(false);
   }
 
-  // fetch profile once and then poll
   async function fetchMe() {
-    setLoadingMe(true);
+    setLoading(true);
     try {
-      const r = await api.getMe();
-      if (r && r.user) {
+      const res = await api.getMe();
+      if (res && res.user) {
+        const nowBal = Number(res.user.usd_balance || 0);
         const prev = prevBalanceRef.current;
-        const nowBal = Number(r.user.usd_balance || 0);
         if (prev != null && nowBal !== prev) {
           setBalanceAnim(nowBal > prev ? 'up' : 'down');
-          // remove animation after 1.2s
           setTimeout(() => setBalanceAnim(null), 1200);
         }
         prevBalanceRef.current = nowBal;
-        setMe(r.user);
+        setMe(res.user);
       } else {
         setMe(null);
       }
-    } catch (e) {
-      // ignore network errors silently
+    } catch (err) {
+      // silently ignore network errors
     } finally {
-      setLoadingMe(false);
+      setLoading(false);
     }
   }
 
   useEffect(() => {
     // initial load
     fetchMe();
-    
-    // poll only when tab is visible
+
+    // poll while page is visible
     function handleVisibility() {
       if (pollRef.current) clearInterval(pollRef.current);
-      
-      if (!document.hidden) {
-        pollRef.current = setInterval(fetchMe, 5000); // 5 segundos
-      }
+      if (!document.hidden) pollRef.current = setInterval(fetchMe, 5000);
     }
-    
+
     document.addEventListener('visibilitychange', handleVisibility);
-    handleVisibility(); // start polling
-    
+    handleVisibility();
+
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
       document.removeEventListener('visibilitychange', handleVisibility);
@@ -77,19 +77,13 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // compute total tokens count
-  const tokensCount = (me && Array.isArray(me.tokens)) ? me.tokens.reduce((s,t)=>s+Number(t.amount||0), 0) : 0;
+  const tokensCount = (me && Array.isArray(me.tokens)) ? me.tokens.reduce((s, t) => s + Number(t.amount || 0), 0) : 0;
 
-  // small helper to format money
   function fmtUSD(n) {
-    try {
-      return Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    } catch (e) {
-      return Number(n).toFixed(2);
-    }
+    try { return Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    catch (e) { return Number(n).toFixed(2); }
   }
 
-  // logout handler: clears token and calls optional prop
   function handleLogout() {
     localStorage.removeItem('token');
     if (onLogout && typeof onLogout === 'function') onLogout();
@@ -98,10 +92,10 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
 
   return (
     <>
-      {/* Overlay shown on mobile when sidebar open */}
-      <div 
-        className={`sidebar-overlay ${open ? 'visible' : ''}`} 
-        onClick={()=>setOpen(false)} 
+      {/* Mobile overlay when sidebar is open */}
+      <div
+        className={`sidebar-overlay ${open ? 'visible' : ''}`}
+        onClick={() => typeof setOpen === 'function' && setOpen(false)}
         style={{ display: window.innerWidth < 900 && open ? 'block' : 'none' }}
       />
 
@@ -115,22 +109,15 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
         </div>
 
         <nav className="sidebar-nav">
-          <NavItem active={view==='market'} label="Market" onClick={()=>navigate('market')} icon="📈" />
-          <NavItem active={view==='portfolio'} label="Portfolio" onClick={()=>navigate('portfolio')} icon="💼" />
-          <NavItem active={view==='dashboard'} label="Dashboard" onClick={()=>navigate('dashboard')} icon="📊" />
-          <NavItem active={view==='create'} label="Create Coin" onClick={()=>navigate('create')} icon="➕" />
-          <NavItem active={view==='leaderboard'} label="Leaderboard" onClick={()=>navigate('leaderboard')} icon="🏆" />
-          <NavItem active={view==='settings'} label="Settings" onClick={()=>navigate('settings')} icon="⚙️" />
-          
-          {/* Admin Panel - só aparece se is_admin = true */}
+          <NavItem active={view === 'market'} label="Market" onClick={() => navigate('market')} icon={'▲'} />
+          <NavItem active={view === 'portfolio'} label="Portfolio" onClick={() => navigate('portfolio')} icon={'▣'} />
+          <NavItem active={view === 'dashboard'} label="Dashboard" onClick={() => navigate('dashboard')} icon={'≡'} />
+          <NavItem active={view === 'create'} label="Create Coin" onClick={() => navigate('create')} icon={'＋'} />
+          <NavItem active={view === 'leaderboard'} label="Leaderboard" onClick={() => navigate('leaderboard')} icon={'★'} />
+          <NavItem active={view === 'settings'} label="Settings" onClick={() => navigate('settings')} icon={'⚙'} />
+
           {me && me.is_admin && (
-            <NavItem 
-              active={view==='admin'} 
-              label="Admin Panel" 
-              onClick={()=>navigate('admin')} 
-              icon="👑"
-              className="admin-item"
-            />
+            <NavItem active={view === 'admin'} label="Admin" onClick={() => navigate('admin')} icon={'♛'} className="admin-item" />
           )}
         </nav>
 
@@ -146,18 +133,20 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
                       ${me ? fmtUSD(me.usd_balance || 0) : '0.00'}
                     </span>
                   </div>
-                  {me.is_admin && <div className="user-badge">👑 Admin</div>}
+                  {me.is_admin && <div className="user-badge">ADMIN</div>}
                 </div>
               </div>
 
               <div className="tokens-info">
                 <div className="tokens-label">Tokens</div>
-                <div className="tokens-value">{ Intl.NumberFormat().format(tokensCount) }</div>
+                <div className="tokens-value">{Intl.NumberFormat().format(tokensCount)}</div>
               </div>
+
+              <button className="logout-btn" onClick={handleLogout}>⎋ Logout</button>
             </>
           ) : (
             <div className="sidebar-login-msg">
-              <p>{loadingMe ? 'Carregando...' : 'Login to trade and create coins'}</p>
+              <p>{loading ? 'Loading...' : 'Login to trade and create coins'}</p>
             </div>
           )}
         </div>
@@ -166,14 +155,10 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
   );
 }
 
-/* ---------- NavItem component ---------- */
 function NavItem({ active, label, onClick, icon, className = '' }) {
   return (
-    <button
-      className={`nav-item ${active ? 'active' : ''} ${className}`}
-      onClick={onClick}
-    >
-      <span className="nav-icon">{icon}</span>
+    <button className={`nav-item ${active ? 'active' : ''} ${className}`} onClick={onClick}>
+      <span className="nav-icon" aria-hidden>{icon}</span>
       <span className="nav-label">{label}</span>
     </button>
   );
