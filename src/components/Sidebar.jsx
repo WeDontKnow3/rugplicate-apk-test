@@ -1,21 +1,14 @@
-n className="nav-label">{label}</span>
-    </button>
-  );
-}
 import React, { useEffect, useState, useRef } from 'react';
 import * as api from '../api';
 
 /**
  * Sidebar.jsx (EN)
- * - Lightweight, responsive sidebar
- * - Shows user info, balance and tokens count
- * - Polls /api/me every few seconds when visible
- * - Uses simple monochrome glyphs instead of colorful emoji
+ * Lightweight, responsive sidebar
  *
  * Props:
  * - view: current view string (e.g. 'market', 'portfolio', ...)
- * - onNavigate(view) : function called when a nav item is clicked
- * - onLogout() : optional callback when user logs out
+ * - onNavigate(view): function called when a nav item is clicked
+ * - onLogout(): optional callback when user logs out
  * - open: boolean (mobile open state)
  * - setOpen: function to control mobile open state
  */
@@ -51,7 +44,7 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
         setMe(null);
       }
     } catch (err) {
-      // silently ignore network errors
+      // ignore network errors silently
     } finally {
       setLoading(false);
     }
@@ -142,7 +135,7 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
                 <div className="tokens-value">{Intl.NumberFormat().format(tokensCount)}</div>
               </div>
 
-              <button className="logout-btn" onClick={handleLogout}>⎋ Logout</button>
+              <button className="logout-btn" onClick={handleLogout} aria-label="Logout">⎋ Logout</button>
             </>
           ) : (
             <div className="sidebar-login-msg">
@@ -158,7 +151,7 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
 function NavItem({ active, label, onClick, icon, className = '' }) {
   return (
     <button className={`nav-item ${active ? 'active' : ''} ${className}`} onClick={onClick}>
-      <span className="nav-icon" aria-hidden>{icon}</span>
+      <span className="nav-icon" aria-hidden="true">{icon}</span>
       <span className="nav-label">{label}</span>
     </button>
   );
