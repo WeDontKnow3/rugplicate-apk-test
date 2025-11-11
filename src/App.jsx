@@ -193,7 +193,7 @@ export default function App() {
 
         {/* FOOTER */}
         <footer className="app-footer">
-          <small>Educational simulator — do not use real money.</small>
+          <small>by zt01 - discord community soon.</small>
         </footer>
       </div>
     </div>
