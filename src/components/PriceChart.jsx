@@ -1,11 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-/**
- * PriceChart:
- *  - props: series = [{ t: ISOstring, price: number }]
- *  - tenta importar 'lightweight-charts' dinamicamente;
- *  - se falhar, renderiza um fallback SVG (linha + área) com tooltip básico.
- */
 export default function PriceChart({ series = [] }) {
   const containerRef = useRef();
   const chartRef = useRef(null);
@@ -13,13 +7,11 @@ export default function PriceChart({ series = [] }) {
   const [libErrorMsg, setLibErrorMsg] = useState(null);
   const [hover, setHover] = useState(null);
 
-  // Try dynamic import once
   useEffect(() => {
     let mounted = true;
     import('lightweight-charts')
       .then(({ createChart }) => {
         if (!mounted || !containerRef.current) return;
-        // create chart
         const chart = createChart(containerRef.current, {
           width: containerRef.current.clientWidth,
           height: 260,
@@ -73,28 +65,23 @@ export default function PriceChart({ series = [] }) {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // only once
-
-  // update chart or fallback when series changes
+  }, []);
+  
   useEffect(() => {
     if (chartRef.current && chartRef.current.setData) {
       chartRef.current.setData(series);
       return;
     }
-    // otherwise, fallback state remains and SVG will re-render via props
   }, [series]);
 
   if (!useFallback) {
-    // container for lightweight-charts (or pending)
     return (
       <div style={{ width: '100%', height: 260, position: 'relative' }}>
         <div ref={containerRef} style={{ width: '100%', height: 260 }} />
-        {/* If the lib failed silently, message will be shown by fallback after import rejection */}
       </div>
     );
   }
 
-  // ---------- SVG fallback chart ----------
   const points = series.filter(p => p.price != null);
   if (points.length === 0) {
     return (
@@ -193,7 +180,7 @@ export default function PriceChart({ series = [] }) {
 
       {/* small notice */}
       <div style={{ position:'absolute', left:10, bottom:6, color:'#9fb0d4', fontSize:12 }}>
-        {libErrorMsg ? 'Gráfico: fallback (lightweight-charts indisponível)' : 'Gráfico (fallback)'}
+        {libErrorMsg ? 'graphic loaded' : 'loaded'}
       </div>
     </div>
   );
