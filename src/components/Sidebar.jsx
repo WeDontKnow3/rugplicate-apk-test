@@ -1,17 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import * as api from '../api';
 
-/**
- * Sidebar.jsx (EN) — with Live Trades panel
- *
- * Adds a small live trades window between the admin/settings nav item and the tokens count.
- * The live feed uses a WebSocket URL from `import.meta.env.VITE_WS_URL` (recommended).
- * If VITE_WS_URL is not set, the panel will show a disabled message.
- *
- * Expected incoming websocket message format (JSON):
- * { type: 'trade', coin: 'ABC', side: 'buy'|'sell', tokenAmount: 12345, usdAmount: 12.34, price: 0.000001, created_at: 'ISO' }
- */
-
 export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -75,7 +64,7 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ---------------- WebSocket live trades logic ----------------
+  // ws start logic
   const WS_URL = import.meta.env.VITE_WS_URL || "wss://devsite-backend-production.up.railway.app/ws";
   const MAX_TRADES = 6;
 
@@ -95,14 +84,11 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
 
       ws.addEventListener('open', () => {
         reconnectRef.current.attempts = 0;
-        // optionally subscribe to a channel (protocol depends on your server)
-        // ws.send(JSON.stringify({ action: 'subscribe', channel: 'trades' }));
       });
 
       ws.addEventListener('message', (ev) => {
         try {
-          const data = JSON.parse(ev.data);
-          // accept either direct trade objects or messages with type
+          const data = JSON.parse(ev.data)
           if (data && (data.type === 'trade' || data.event === 'trade')) {
             const t = {
               coin: data.coin || data.symbol || data.token || 'UNKNOWN',
@@ -114,10 +100,8 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
             };
             pushTrade(t);
           } else if (data && data.type === 'pong') {
-            // ignore
           }
         } catch (e) {
-          // ignore malformed messages
           console.warn('ws parse error', e);
         }
       });
@@ -209,7 +193,6 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
           )}
         </nav>
 
-        {/* ---------------- Live trades panel ---------------- */}
         <div className="live-trades-card" style={{ marginTop: 10, marginBottom: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <div style={{ fontWeight: 800 }}>Live Trades (offline)</div>
@@ -234,7 +217,6 @@ export default function Sidebar({ view, onNavigate, onLogout, open, setOpen }) {
             <div className="muted">No websocket configured. Set VITE_WS_URL to enable live trades.</div>
           )}
         </div>
-        {/* ---------------- end live trades ---------------- */}
 
         <div className="sidebar-bottom">
           {me ? (
