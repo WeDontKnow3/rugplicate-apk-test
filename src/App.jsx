@@ -48,7 +48,7 @@ export default function App() {
     }
   }
 
-  useEffect(() => { 
+  useEffect(() => {
     loadMe();
   }, []);
 
@@ -91,7 +91,7 @@ export default function App() {
 
   function handleNavigate(v) {
     setView(v);
-    if (window.innerWidth < 900) setSidebarOpen(false); 
+    if (window.innerWidth < 900) setSidebarOpen(false);
   }
 
   async function handleClaimDaily() {
@@ -152,12 +152,13 @@ export default function App() {
               {view === 'settings' && 'Settings'}
               {view === 'admin' && 'Admin Panel'}
               {view === 'promos' && 'Promos'}
+              {view === 'gambling' && 'Gambling'}
             </h1>
           </div>
 
           <div className="topbar-right">
             {user && dailyStatus && (
-              <button 
+              <button
                 className={`daily-reward-btn ${dailyStatus.can_claim ? 'ready' : 'waiting'}`}
                 onClick={handleClaimDaily}
                 disabled={!dailyStatus.can_claim || claimingDaily}
@@ -230,6 +231,13 @@ export default function App() {
 
           {user && user.is_admin && view === 'admin' && (
             <AdminPanel onActionComplete={handleActionComplete} />
+          )}
+
+          {user && view === 'gambling' && (
+            <div className="card danger-zone">
+              <h2>Gambling — IMPORTANT</h2>
+              <p>This area contains high-risk gambling features. Users should understand the risks before participating. Use responsibly and within your limits.</p>
+            </div>
           )}
         </main>
 
