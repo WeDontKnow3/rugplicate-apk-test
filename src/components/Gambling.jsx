@@ -48,6 +48,9 @@ export default function Gambling({ onBack, onActionComplete }) {
       return;
     }
     setProcessing(true);
+    setFlipping(true);
+    setAnimName('');
+    setLandSide(null);
     try {
       const data = await api.coinFlip(nBet, side);
       let win = false;
@@ -63,53 +66,49 @@ export default function Gambling({ onBack, onActionComplete }) {
       }
       const finalSide = win ? side : (side === 'heads' ? 'tails' : 'heads');
       const animToUse = finalSide === 'heads' ? 'spinToHead' : 'spinToTail';
-      setFlipping(true);
       setAnimName(animToUse);
-      setLandSide(null);
       animTimerRef.current = setTimeout(() => {
         setFlipping(false);
         setLandSide(finalSide);
+        setAnimName('');
         setResult({ server: serverOk, win, net, message: data && data.message ? data.message : null });
         setMessage(win ? `You won $${Math.abs(net).toFixed(2)}` : `You lost $${Math.abs(net).toFixed(2)}`);
         if (onActionComplete && typeof onActionComplete === 'function') {
           onActionComplete({ animate: { amount: Math.abs(net), type: win ? 'up' : 'down' }, keepView: true });
         }
         setProcessing(false);
-        setAnimName('');
       }, ANIM_DURATION + 60);
     } catch (err) {
       const localWin = Math.random() < 0.5;
       const net = localWin ? nBet : -nBet;
       const finalSide = localWin ? side : (side === 'heads' ? 'tails' : 'heads');
       const animToUse = finalSide === 'heads' ? 'spinToHead' : 'spinToTail';
-      setFlipping(true);
       setAnimName(animToUse);
-      setLandSide(null);
       animTimerRef.current = setTimeout(() => {
         setFlipping(false);
         setLandSide(finalSide);
+        setAnimName('');
         setResult({ server: false, win: localWin, net, message: 'network error, simulated result' });
         setMessage(localWin ? `You won $${nBet.toFixed(2)} (simulated)` : `You lost $${nBet.toFixed(2)} (simulated)`);
         if (onActionComplete && typeof onActionComplete === 'function') {
           onActionComplete({ animate: { amount: Math.abs(net), type: net > 0 ? 'up' : 'down' }, keepView: true });
         }
         setProcessing(false);
-        setAnimName('');
       }, ANIM_DURATION + 60);
     }
   }
 
-  const coinSize = 200;
+  const coinSize = 220;
 
   return (
     <div className="card danger-zone">
       <style>{`
         .top-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-        .controls-row{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+        .controls-row{display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
         .big-coin-area{display:flex;justify-content:center;margin-top:18px;margin-bottom:6px}
-        .coin-wrapper{width:${coinSize}px;height:${coinSize}px;display:flex;align-items:center;justify-content:center}
-        .coin{width:${Math.floor(coinSize * 0.9)}px;height:${Math.floor(coinSize * 0.9)}px;border-radius:50%;position:relative;transform-style:preserve-3d;box-shadow:0 8px 24px rgba(0,0,0,0.25);overflow:visible}
-        .coin-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:50%;backface-visibility:hidden;background-size:cover;background-position:center;background-repeat:no-repeat}
+        .coin-wrapper{width:${coinSize}px;height:${coinSize}px;display:flex;align-items:center;justify-content:center;overflow:visible}
+        .coin{width:${Math.floor(coinSize * 0.92)}px;height:${Math.floor(coinSize * 0.92)}px;border-radius:50%;position:relative;transform-style:preserve-3d;box-shadow:0 18px 40px rgba(0,0,0,0.28);overflow:visible;border:6px solid rgba(0,0,0,0.06);background:transparent}
+        .coin-face{position:absolute;left:6px;top:6px;right:6px;bottom:6px;display:flex;align-items:center;justify-content:center;border-radius:50%;backface-visibility:hidden;background-size:contain;background-position:center center;background-repeat:no-repeat;overflow:hidden}
         .coin-face.back{transform:rotateY(180deg)}
         .coin.spinToHead{animation:spinToHead ${ANIM_DURATION}ms cubic-bezier(.22,.9,.3,1) forwards}
         .coin.spinToTail{animation:spinToTail ${ANIM_DURATION}ms cubic-bezier(.22,.9,.3,1) forwards}
@@ -125,17 +124,20 @@ export default function Gambling({ onBack, onActionComplete }) {
           60%{transform:rotateY(1080deg) rotateX(3deg) translateY(-6px) scale(1.01)}
           100%{transform:rotateY(180deg) rotateX(0deg) translateY(0) scale(1)}
         }
-        .coin-shadow{width:${Math.floor(coinSize * 0.42)}px;height:${Math.floor(coinSize * 0.08)}px;border-radius:50%;background:rgba(0,0,0,0.18);transition:transform ${ANIM_DURATION}ms ease, opacity ${ANIM_DURATION}ms ease;margin-top:12px}
-        .coin.spinToHead + .coin-shadow{transform:scale(0.8);opacity:0.6}
-        .coin.spinToTail + .coin-shadow{transform:scale(0.8);opacity:0.6}
+        .coin.land-head{transform:rotateY(0deg) rotateX(0deg) translateY(0) scale(1)}
+        .coin.land-tail{transform:rotateY(180deg) rotateX(0deg) translateY(0) scale(1)}
+        .coin-shadow{width:${Math.floor(coinSize * 0.46)}px;height:${Math.floor(coinSize * 0.08)}px;border-radius:50%;background:rgba(0,0,0,0.20);transition:transform ${ANIM_DURATION}ms ease, opacity ${ANIM_DURATION}ms ease;margin-top:14px}
+        .coin.spinToHead + .coin-shadow,.coin.spinToTail + .coin-shadow{transform:scale(0.78);opacity:0.6}
         @media (max-width:480px){
           .coin-wrapper{width:160px;height:160px}
-          .coin{width:144px;height:144px}
+          .coin{width:146px;height:146px}
+          .coin-face{left:6px;top:6px;right:6px;bottom:6px}
+          .coin-shadow{width:76px}
         }
       `}</style>
 
       <div className="top-row">
-        <h2 style={{ margin: 0 }}>Coin Flip</h2>
+        <h2 style={{ margin: 0 }}>Coin Flip — IMPORTANT</h2>
         <div>
           <button className="btn ghost" onClick={onBack}>Back</button>
         </div>
@@ -155,11 +157,11 @@ export default function Gambling({ onBack, onActionComplete }) {
           onChange={(e) => setBet(clampBet(e.target.value))}
           placeholder={`${MIN_BET}`}
           aria-label="Bet amount"
-          style={{ width: 140 }}
+          style={{ width: 160 }}
         />
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className={side === 'heads' ? 'btn' : 'btn ghost'} onClick={() => setSide('heads')} disabled={processing}>Heads</button>
-          <button className={side === 'tails' ? 'btn' : 'btn ghost'} onClick={() => setSide('tails')} disabled={processing}>Tails</button>
+          <button className={side === 'heads' ? 'btn' : 'btn ghost'} onClick={() => setSide('heads')} disabled={processing || flipping}>Heads</button>
+          <button className={side === 'tails' ? 'btn' : 'btn ghost'} onClick={() => setSide('tails')} disabled={processing || flipping}>Tails</button>
         </div>
         <div>
           <button className="btn" onClick={handleFlip} disabled={processing || flipping}>
