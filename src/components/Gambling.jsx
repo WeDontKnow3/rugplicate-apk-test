@@ -3,7 +3,7 @@ import * as api from '../api';
 
 const MIN_BET = 1;
 const MAX_BET = 1000000;
-const ANIM_DURATION = 1800;
+const ANIM_DURATION = 1200;
 
 const HEAD_IMG_URL = 'https://cdn.discordapp.com/attachments/1434987028562448589/1436397093521592350/10_20251107164843.png?ex=691d4c4a&is=691bfaca&hm=0c7dae9d2ec448be41631f015c8fbb5845219222cfe90072fdbf1097905461f0&';
 const TAIL_IMG_URL = 'https://cdn.discordapp.com/attachments/1434987028562448589/1436397093869715609/10_20251107164835.png?ex=691d4c4a&is=691bfaca&hm=8edaa8682c2cff43594fe38bd12757490b8e4cd4a009fe548ee3f2660d3cbaeb&';
@@ -72,7 +72,7 @@ export default function Gambling({ onBack, onActionComplete }) {
           onActionComplete({ animate: { amount: Math.abs(net), type: win ? 'up' : 'down' }, keepView: true });
         }
         setProcessing(false);
-      }, ANIM_DURATION + 120);
+      }, ANIM_DURATION + 80);
     } catch (err) {
       const localWin = Math.random() < 0.5;
       const net = localWin ? nBet : -nBet;
@@ -86,7 +86,7 @@ export default function Gambling({ onBack, onActionComplete }) {
           onActionComplete({ animate: { amount: Math.abs(net), type: net > 0 ? 'up' : 'down' }, keepView: true });
         }
         setProcessing(false);
-      }, ANIM_DURATION + 120);
+      }, ANIM_DURATION + 80);
     }
   }
 
@@ -94,19 +94,21 @@ export default function Gambling({ onBack, onActionComplete }) {
     <div className="card danger-zone">
       <style>{`
         .coin-stage{display:flex;align-items:center;gap:16px}
-        .coin-wrapper{width:120px;height:120px;perspective:1200px;display:flex;align-items:flex-start;justify-content:center}
-        .coin{width:100px;height:100px;border-radius:50%;position:relative;transform-style:preserve-3d;transition:transform .35s ease, top .35s ease}
+        .coin-wrapper{width:120px;height:120px;display:flex;align-items:center;justify-content:center}
+        .coin{width:100px;height:100px;border-radius:50%;position:relative;transform-style:preserve-3d;transition:transform .28s ease, box-shadow .28s ease}
         .coin-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:50%;backface-visibility:hidden;background-size:cover;background-position:center;background-repeat:no-repeat}
         .coin-face.back{transform:rotateY(180deg)}
-        .coin.spin{animation:spinFall ${ANIM_DURATION}ms cubic-bezier(.2,.9,.3,1) forwards}
-        @keyframes spinFall{
-          0%{transform:rotateX(0deg) rotateY(0deg) translateY(0) rotateZ(0);}
-          30%{transform:rotateX(720deg) rotateY(720deg) translateY(-12px) rotateZ(10deg);}
-          60%{transform:rotateX(1440deg) rotateY(1440deg) translateY(4px) rotateZ(-6deg);}
-          100%{transform:rotateX(1680deg) rotateY(1800deg) translateY(120px) rotateZ(0deg);}
+        .coin.spin{animation:spinSoft ${ANIM_DURATION}ms cubic-bezier(.22,.9,.3,1) forwards}
+        @keyframes spinSoft{
+          0%{transform:rotateY(0deg) rotateX(8deg) translateY(0) scale(1);}
+          25%{transform:rotateY(540deg) rotateX(6deg) translateY(-6px) scale(1.02);}
+          60%{transform:rotateY(1080deg) rotateX(3deg) translateY(-3px) scale(1.01);}
+          100%{transform:rotateY(0deg) rotateX(0deg) translateY(0) scale(1);}
         }
-        .coin.land-head{transform:rotateY(0deg) translateY(120px) !important}
-        .coin.land-tail{transform:rotateY(180deg) translateY(120px) !important}
+        .coin.land-head{transform:rotateY(0deg) rotateX(0deg) translateY(0) !important}
+        .coin.land-tail{transform:rotateY(180deg) rotateX(0deg) translateY(0) !important}
+        .coin-shadow{width:84px;height:10px;border-radius:50%;background:rgba(0,0,0,0.18);transition:transform .28s ease, opacity .28s ease;margin-top:8px}
+        .coin.spin + .coin-shadow{transform:scale(0.8);opacity:0.6}
         .controls{display:flex;gap:8px;align-items:center}
         @media (max-width:480px){ .coin-wrapper{width:88px;height:88px} .coin{width:72px;height:72px} }
       `}</style>
@@ -151,25 +153,26 @@ export default function Gambling({ onBack, onActionComplete }) {
           <div style={{ fontWeight: 800 }}>${bet || '0'}</div>
         </div>
 
-        <div className="coin-wrapper" aria-hidden>
-          <div
-            className={`coin ${flipping ? 'spin' : ''} ${landSide ? (landSide === 'heads' ? 'land-head' : 'land-tail') : ''}`}
-            style={{ top: 0 }}
-          >
-            <div
-              className="coin-face front"
-              style={{ backgroundImage: `url(${HEAD_IMG_URL})` }}
-            />
-            <div
-              className="coin-face back"
-              style={{ backgroundImage: `url(${TAIL_IMG_URL})` }}
-            />
-          </div>
-        </div>
-
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>Result</div>
-          <div style={{ fontWeight: 800 }}>
+          <div className="coin-wrapper" aria-hidden>
+            <div
+              className={`coin ${flipping ? 'spin' : ''} ${landSide ? (landSide === 'heads' ? 'land-head' : 'land-tail') : ''}`}
+            >
+              <div
+                className="coin-face front"
+                style={{ backgroundImage: `url(${HEAD_IMG_URL})` }}
+              />
+              <div
+                className="coin-face back"
+                style={{ backgroundImage: `url(${TAIL_IMG_URL})` }}
+              />
+            </div>
+            <div className="coin-shadow" />
+          </div>
+          <div style={{ marginTop: 6, fontSize: 13, color: 'var(--text-secondary)' }}>
+            Result
+          </div>
+          <div style={{ fontWeight: 800, marginTop: 4 }}>
             {result ? (result.win ? `+ $${Math.abs(result.net).toFixed(2)}` : `- $${Math.abs(result.net).toFixed(2)}`) : '—'}
           </div>
         </div>
