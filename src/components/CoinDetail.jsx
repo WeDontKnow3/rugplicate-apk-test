@@ -10,9 +10,26 @@ export default function CoinDetail({ symbol, onBack, onActionComplete }) {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
   const [loadingCoin, setLoadingCoin] = useState(true);
+  const [userBalance, setUserBalance] = useState(0);
+  const [userTokenAmount, setUserTokenAmount] = useState(0);
+  const [estimatedTokens, setEstimatedTokens] = useState(null);
+  const [estimatedUsd, setEstimatedUsd] = useState(null);
 
   const prevPriceRef = useRef(null);
   const priceElRef = useRef(null);
+
+  async function loadUserData() {
+    try {
+      const r = await api.getMe();
+      if (r && r.user) {
+        setUserBalance(Number(r.user.usd_balance || 0));
+        const userToken = r.user.tokens?.find(t => t.symbol === symbol);
+        setUserTokenAmount(userToken ? Number(userToken.amount || 0) : 0);
+      }
+    } catch (e) {
+      console.error('loadUserData error', e);
+    }
+  }
 
   async function load() {
     setLoadingCoin(true);
@@ -22,15 +39,14 @@ export default function CoinDetail({ symbol, onBack, onActionComplete }) {
       if (r && r.coin) {
         setCoin(r.coin);
       } else {
-        // API returned error or invalid payload
         console.error('getCoin error response:', r);
         setCoin(null);
-        setMsg(r.error || 'Coin não encontrada / resposta inválida do servidor');
+        setMsg(r.error || 'Coin not found / invalid server response');
       }
     } catch (e) {
       console.error('getCoin threw:', e);
       setCoin(null);
-      setMsg('Erro ao carregar coin (ver console)');
+      setMsg('Error loading coin (see console)');
     } finally {
       setLoadingCoin(false);
     }
@@ -50,9 +66,12 @@ export default function CoinDetail({ symbol, onBack, onActionComplete }) {
     }
   }
 
-  useEffect(() => { load(); loadHistory(); }, [symbol]);
+  useEffect(() => { 
+    load(); 
+    loadHistory(); 
+    loadUserData();
+  }, [symbol]);
 
-  // flash price when it changes
   useEffect(() => {
     if (!coin) return;
     const prev = prevPriceRef.current;
@@ -69,26 +88,72 @@ export default function CoinDetail({ symbol, onBack, onActionComplete }) {
     prevPriceRef.current = curr;
   }, [coin]);
 
+  useEffect(() => {
+    if (!coin || !buyUsd || Number(buyUsd) <= 0) {
+      setEstimatedTokens(null);
+      return;
+    }
+    const usdIn = Number(buyUsd);
+    const poolBase = Number(coin.pool_base || 0);
+    const poolToken = Number(coin.pool_token || 0);
+    if (poolBase <= 0 || poolToken <= 0) {
+      setEstimatedTokens(null);
+      return;
+    }
+    const K_FEE = 0.003;
+    const FEE_MULT = 1 - K_FEE;
+    const effectiveUsd = FEE_MULT * usdIn;
+    const k = poolBase * poolToken;
+    const newPoolBase = poolBase + effectiveUsd;
+    const newPoolToken = k / newPoolBase;
+    const tokensReceived = poolToken - newPoolToken;
+    setEstimatedTokens(tokensReceived > 0 ? tokensReceived : 0);
+  }, [buyUsd, coin]);
+
+  useEffect(() => {
+    if (!coin || !sellAmt || Number(sellAmt) <= 0) {
+      setEstimatedUsd(null);
+      return;
+    }
+    const tAmount = Number(sellAmt);
+    const poolBase = Number(coin.pool_base || 0);
+    const poolToken = Number(coin.pool_token || 0);
+    if (poolBase <= 0 || poolToken <= 0) {
+      setEstimatedUsd(null);
+      return;
+    }
+    const K_FEE = 0.003;
+    const FEE_MULT = 1 - K_FEE;
+    const k = poolBase * poolToken;
+    const newPoolToken = poolToken + tAmount;
+    const newPoolBase = k / newPoolToken;
+    const baseOutBeforeFee = poolBase - newPoolBase;
+    const usdOut = FEE_MULT * baseOutBeforeFee;
+    setEstimatedUsd(usdOut > 0 ? usdOut : 0);
+  }, [sellAmt, coin]);
+
   async function buy() {
     setMsg('');
     const usd = Number(buyUsd);
-    if (!usd || usd <= 0) { setMsg('USD inválido'); return; }
+    if (!usd || usd <= 0) { setMsg('Invalid USD'); return; }
     setLoading(true);
     try {
       const res = await api.buyCoin(symbol, usd);
       if (res && res.ok) {
-        setMsg(`Comprou ${Number(res.bought.tokenAmount).toFixed(6)} ${symbol}`);
+        setMsg(`Bought ${Number(res.bought.tokenAmount).toFixed(6)} ${symbol}`);
         await load();
         await loadHistory();
+        await loadUserData();
         if (onActionComplete) onActionComplete({ keepView: true, animate: { amount: Number(res.bought.usdSpent || usd), type: 'down' } });
         setBuyUsd('');
+        setEstimatedTokens(null);
       } else {
         console.error('buyCoin error:', res);
-        setMsg(res && res.error ? res.error : 'Erro na compra (ver console)');
+        setMsg(res && res.error ? res.error : 'Buy error (see console)');
       }
     } catch (err) {
       console.error('buyCoin threw:', err);
-      setMsg('Erro na compra (ver console)');
+      setMsg('Buy error (see console)');
     } finally {
       setLoading(false);
     }
@@ -97,25 +162,39 @@ export default function CoinDetail({ symbol, onBack, onActionComplete }) {
   async function sell() {
     setMsg('');
     const amt = Number(sellAmt);
-    if (!amt || amt <= 0) { setMsg('Quantidade inválida'); return; }
+    if (!amt || amt <= 0) { setMsg('Invalid amount'); return; }
     setLoading(true);
     try {
       const res = await api.sellCoin(symbol, amt);
       if (res && res.ok) {
-        setMsg(`Vendeu ${Number(res.sold.tokenAmount).toFixed(6)} ${symbol}`);
+        setMsg(`Sold ${Number(res.sold.tokenAmount).toFixed(6)} ${symbol}`);
         await load();
         await loadHistory();
+        await loadUserData();
         if (onActionComplete) onActionComplete({ keepView: true, animate: { amount: Number(res.sold.usdGained || 0), type: 'up' } });
         setSellAmt('');
+        setEstimatedUsd(null);
       } else {
         console.error('sellCoin error:', res);
-        setMsg(res && res.error ? res.error : 'Erro na venda (ver console)');
+        setMsg(res && res.error ? res.error : 'Sell error (see console)');
       }
     } catch (err) {
       console.error('sellCoin threw:', err);
-      setMsg('Erro na venda (ver console)');
+      setMsg('Sell error (see console)');
     } finally {
       setLoading(false);
+    }
+  }
+
+  function handleMaxBuy() {
+    if (userBalance > 0) {
+      setBuyUsd(userBalance.toString());
+    }
+  }
+
+  function handleMaxSell() {
+    if (userTokenAmount > 0) {
+      setSellAmt(userTokenAmount.toString());
     }
   }
 
@@ -124,7 +203,7 @@ export default function CoinDetail({ symbol, onBack, onActionComplete }) {
       <button className="back-btn" onClick={onBack}>← Back</button>
       <h2>Coin: {symbol}</h2>
 
-      {loadingCoin && <div className="card">Carregando coin...</div>}
+      {loadingCoin && <div className="card">Loading coin...</div>}
 
       {!loadingCoin && msg && <div className="card"><div style={{color:'#ffd2d2'}}>{msg}</div></div>}
 
@@ -154,14 +233,58 @@ export default function CoinDetail({ symbol, onBack, onActionComplete }) {
 
           <div className="card">
             <h3>Buy (base → token)</h3>
-            <input className="full" placeholder="USD" value={buyUsd} onChange={e=>setBuyUsd(e.target.value)} inputMode="decimal" />
-            <button className="btn" onClick={buy} disabled={loading}>{loading ? 'Processing...' : 'Buy'}</button>
+            <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
+              <input 
+                className="full" 
+                placeholder="USD" 
+                value={buyUsd} 
+                onChange={e=>setBuyUsd(e.target.value)} 
+                inputMode="decimal" 
+                style={{flex:1}}
+              />
+              <button 
+                className="btn" 
+                onClick={handleMaxBuy} 
+                disabled={loading || userBalance <= 0}
+                style={{minWidth:'60px'}}
+              >
+                Max
+              </button>
+            </div>
+            {estimatedTokens !== null && (
+              <div style={{marginTop:'8px', fontSize:'0.9em', color:'#aaa'}}>
+                Estimated: {estimatedTokens.toFixed(6)} {symbol}
+              </div>
+            )}
+            <button className="btn" onClick={buy} disabled={loading} style={{marginTop:'8px'}}>{loading ? 'Processing...' : 'Buy'}</button>
           </div>
 
           <div className="card">
             <h3>Sell (token → base)</h3>
-            <input className="full" placeholder="Token amount" value={sellAmt} onChange={e=>setSellAmt(e.target.value)} inputMode="decimal" />
-            <button className="btn" onClick={sell} disabled={loading}>{loading ? 'Processing...' : 'Sell'}</button>
+            <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
+              <input 
+                className="full" 
+                placeholder="Token amount" 
+                value={sellAmt} 
+                onChange={e=>setSellAmt(e.target.value)} 
+                inputMode="decimal"
+                style={{flex:1}}
+              />
+              <button 
+                className="btn" 
+                onClick={handleMaxSell} 
+                disabled={loading || userTokenAmount <= 0}
+                style={{minWidth:'60px'}}
+              >
+                Max
+              </button>
+            </div>
+            {estimatedUsd !== null && (
+              <div style={{marginTop:'8px', fontSize:'0.9em', color:'#aaa'}}>
+                Estimated: ${estimatedUsd.toFixed(6)}
+              </div>
+            )}
+            <button className="btn" onClick={sell} disabled={loading} style={{marginTop:'8px'}}>{loading ? 'Processing...' : 'Sell'}</button>
           </div>
 
           {msg && <p className="msg">{msg}</p>}
