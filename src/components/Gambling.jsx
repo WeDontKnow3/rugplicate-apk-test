@@ -3,7 +3,7 @@ import * as api from '../api';
 
 const MIN_BET = 1;
 const MAX_BET = 1000000;
-const ANIM_DURATION = 1200;
+const ANIM_DURATION = 1100;
 
 const HEAD_IMG_URL = 'https://cdn.discordapp.com/attachments/1434987028562448589/1436397093521592350/10_20251107164843.png?ex=691d4c4a&is=691bfaca&hm=0c7dae9d2ec448be41631f015c8fbb5845219222cfe90072fdbf1097905461f0&';
 const TAIL_IMG_URL = 'https://cdn.discordapp.com/attachments/1434987028562448589/1436397093869715609/10_20251107164835.png?ex=691d4c4a&is=691bfaca&hm=8edaa8682c2cff43594fe38bd12757490b8e4cd4a009fe548ee3f2660d3cbaeb&';
@@ -14,6 +14,7 @@ export default function Gambling({ onBack, onActionComplete }) {
   const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState(null);
   const [result, setResult] = useState(null);
+  const [animName, setAnimName] = useState('');
   const [flipping, setFlipping] = useState(false);
   const [landSide, setLandSide] = useState(null);
   const animTimerRef = useRef(null);
@@ -47,8 +48,6 @@ export default function Gambling({ onBack, onActionComplete }) {
       return;
     }
     setProcessing(true);
-    setFlipping(true);
-    setLandSide(null);
     try {
       const data = await api.coinFlip(nBet, side);
       let win = false;
@@ -63,6 +62,10 @@ export default function Gambling({ onBack, onActionComplete }) {
         net = win ? nBet : -nBet;
       }
       const finalSide = win ? side : (side === 'heads' ? 'tails' : 'heads');
+      const animToUse = finalSide === 'heads' ? 'spinToHead' : 'spinToTail';
+      setFlipping(true);
+      setAnimName(animToUse);
+      setLandSide(null);
       animTimerRef.current = setTimeout(() => {
         setFlipping(false);
         setLandSide(finalSide);
@@ -72,11 +75,16 @@ export default function Gambling({ onBack, onActionComplete }) {
           onActionComplete({ animate: { amount: Math.abs(net), type: win ? 'up' : 'down' }, keepView: true });
         }
         setProcessing(false);
-      }, ANIM_DURATION + 80);
+        setAnimName('');
+      }, ANIM_DURATION + 60);
     } catch (err) {
       const localWin = Math.random() < 0.5;
       const net = localWin ? nBet : -nBet;
       const finalSide = localWin ? side : (side === 'heads' ? 'tails' : 'heads');
+      const animToUse = finalSide === 'heads' ? 'spinToHead' : 'spinToTail';
+      setFlipping(true);
+      setAnimName(animToUse);
+      setLandSide(null);
       animTimerRef.current = setTimeout(() => {
         setFlipping(false);
         setLandSide(finalSide);
@@ -86,35 +94,48 @@ export default function Gambling({ onBack, onActionComplete }) {
           onActionComplete({ animate: { amount: Math.abs(net), type: net > 0 ? 'up' : 'down' }, keepView: true });
         }
         setProcessing(false);
-      }, ANIM_DURATION + 80);
+        setAnimName('');
+      }, ANIM_DURATION + 60);
     }
   }
+
+  const coinSize = 200;
 
   return (
     <div className="card danger-zone">
       <style>{`
-        .coin-stage{display:flex;align-items:center;gap:16px}
-        .coin-wrapper{width:120px;height:120px;display:flex;align-items:center;justify-content:center}
-        .coin{width:100px;height:100px;border-radius:50%;position:relative;transform-style:preserve-3d;transition:transform .28s ease, box-shadow .28s ease}
+        .top-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+        .controls-row{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+        .big-coin-area{display:flex;justify-content:center;margin-top:18px;margin-bottom:6px}
+        .coin-wrapper{width:${coinSize}px;height:${coinSize}px;display:flex;align-items:center;justify-content:center}
+        .coin{width:${Math.floor(coinSize * 0.9)}px;height:${Math.floor(coinSize * 0.9)}px;border-radius:50%;position:relative;transform-style:preserve-3d;box-shadow:0 8px 24px rgba(0,0,0,0.25);overflow:visible}
         .coin-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:50%;backface-visibility:hidden;background-size:cover;background-position:center;background-repeat:no-repeat}
         .coin-face.back{transform:rotateY(180deg)}
-        .coin.spin{animation:spinSoft ${ANIM_DURATION}ms cubic-bezier(.22,.9,.3,1) forwards}
-        @keyframes spinSoft{
-          0%{transform:rotateY(0deg) rotateX(8deg) translateY(0) scale(1);}
-          25%{transform:rotateY(540deg) rotateX(6deg) translateY(-6px) scale(1.02);}
-          60%{transform:rotateY(1080deg) rotateX(3deg) translateY(-3px) scale(1.01);}
-          100%{transform:rotateY(0deg) rotateX(0deg) translateY(0) scale(1);}
+        .coin.spinToHead{animation:spinToHead ${ANIM_DURATION}ms cubic-bezier(.22,.9,.3,1) forwards}
+        .coin.spinToTail{animation:spinToTail ${ANIM_DURATION}ms cubic-bezier(.22,.9,.3,1) forwards}
+        @keyframes spinToHead{
+          0%{transform:rotateY(0deg) rotateX(8deg) translateY(0) scale(1)}
+          30%{transform:rotateY(540deg) rotateX(6deg) translateY(-10px) scale(1.02)}
+          60%{transform:rotateY(1080deg) rotateX(3deg) translateY(-6px) scale(1.01)}
+          100%{transform:rotateY(0deg) rotateX(0deg) translateY(0) scale(1)}
         }
-        .coin.land-head{transform:rotateY(0deg) rotateX(0deg) translateY(0) !important}
-        .coin.land-tail{transform:rotateY(180deg) rotateX(0deg) translateY(0) !important}
-        .coin-shadow{width:84px;height:10px;border-radius:50%;background:rgba(0,0,0,0.18);transition:transform .28s ease, opacity .28s ease;margin-top:8px}
-        .coin.spin + .coin-shadow{transform:scale(0.8);opacity:0.6}
-        .controls{display:flex;gap:8px;align-items:center}
-        @media (max-width:480px){ .coin-wrapper{width:88px;height:88px} .coin{width:72px;height:72px} }
+        @keyframes spinToTail{
+          0%{transform:rotateY(0deg) rotateX(8deg) translateY(0) scale(1)}
+          30%{transform:rotateY(540deg) rotateX(6deg) translateY(-10px) scale(1.02)}
+          60%{transform:rotateY(1080deg) rotateX(3deg) translateY(-6px) scale(1.01)}
+          100%{transform:rotateY(180deg) rotateX(0deg) translateY(0) scale(1)}
+        }
+        .coin-shadow{width:${Math.floor(coinSize * 0.42)}px;height:${Math.floor(coinSize * 0.08)}px;border-radius:50%;background:rgba(0,0,0,0.18);transition:transform ${ANIM_DURATION}ms ease, opacity ${ANIM_DURATION}ms ease;margin-top:12px}
+        .coin.spinToHead + .coin-shadow{transform:scale(0.8);opacity:0.6}
+        .coin.spinToTail + .coin-shadow{transform:scale(0.8);opacity:0.6}
+        @media (max-width:480px){
+          .coin-wrapper{width:160px;height:160px}
+          .coin{width:144px;height:144px}
+        }
       `}</style>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h2 style={{ margin: 0 }}>Coin Flip — IMPORTANT</h2>
+      <div className="top-row">
+        <h2 style={{ margin: 0 }}>Coin Flip</h2>
         <div>
           <button className="btn ghost" onClick={onBack}>Back</button>
         </div>
@@ -124,7 +145,7 @@ export default function Gambling({ onBack, onActionComplete }) {
         Flip a fair coin. Minimum bet {MIN_BET}, maximum bet {MAX_BET}. This is high-risk; play responsibly.
       </p>
 
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+      <div className="controls-row">
         <input
           type="number"
           className="small-input"
@@ -134,9 +155,9 @@ export default function Gambling({ onBack, onActionComplete }) {
           onChange={(e) => setBet(clampBet(e.target.value))}
           placeholder={`${MIN_BET}`}
           aria-label="Bet amount"
-          style={{ width: 120 }}
+          style={{ width: 140 }}
         />
-        <div className="controls">
+        <div style={{ display: 'flex', gap: 8 }}>
           <button className={side === 'heads' ? 'btn' : 'btn ghost'} onClick={() => setSide('heads')} disabled={processing}>Heads</button>
           <button className={side === 'tails' ? 'btn' : 'btn ghost'} onClick={() => setSide('tails')} disabled={processing}>Tails</button>
         </div>
@@ -147,32 +168,19 @@ export default function Gambling({ onBack, onActionComplete }) {
         </div>
       </div>
 
-      <div className="coin-stage" style={{ marginBottom: 12 }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>You</div>
-          <div style={{ fontWeight: 800 }}>${bet || '0'}</div>
-        </div>
-
+      <div className="big-coin-area">
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div className="coin-wrapper" aria-hidden>
             <div
-              className={`coin ${flipping ? 'spin' : ''} ${landSide ? (landSide === 'heads' ? 'land-head' : 'land-tail') : ''}`}
+              className={`coin ${animName ? animName : (landSide === 'tails' ? 'land-tail' : landSide === 'heads' ? 'land-head' : '')}`}
             >
-              <div
-                className="coin-face front"
-                style={{ backgroundImage: `url(${HEAD_IMG_URL})` }}
-              />
-              <div
-                className="coin-face back"
-                style={{ backgroundImage: `url(${TAIL_IMG_URL})` }}
-              />
+              <div className="coin-face front" style={{ backgroundImage: `url(${HEAD_IMG_URL})` }} />
+              <div className="coin-face back" style={{ backgroundImage: `url(${TAIL_IMG_URL})` }} />
             </div>
             <div className="coin-shadow" />
           </div>
-          <div style={{ marginTop: 6, fontSize: 13, color: 'var(--text-secondary)' }}>
-            Result
-          </div>
-          <div style={{ fontWeight: 800, marginTop: 4 }}>
+          <div style={{ marginTop: 10, fontSize: 13, color: 'var(--text-secondary)' }}>Result</div>
+          <div style={{ fontWeight: 800, marginTop: 6 }}>
             {result ? (result.win ? `+ $${Math.abs(result.net).toFixed(2)}` : `- $${Math.abs(result.net).toFixed(2)}`) : '—'}
           </div>
         </div>
