@@ -1,0 +1,18 @@
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    compileSdk 33
+
+    defaultConfig {
+        minSdk 21
+        targetSdk 33
+    }
+
+    namespace 'com.capacitor.cordova.plugins'
+}
+
+dependencies {
+    // vazio intencionalmente — esse módulo é só um stub para CI
+}
