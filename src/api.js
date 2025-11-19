@@ -63,14 +63,16 @@ export async function login(username, password){
 }
 
 export async function adminUpdateUserBalance(userId, balance) {
-  const token = localStorage.getItem('token');
-  if (!token) return { error: 'no token' };
-  const res = await fetch(`${API_BASE}/admin/users/${userId}/balance`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ balance })
-  });
-  return res.json();
+  try{
+    const res = await fetch(`${API_BASE}/api/admin/users/${userId}/balance`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ balance })
+    });
+    return await safeJson(res);
+  }catch(e){
+    return { error: e.message || "network_error" };
+  }
 }
 
 export async function getMe(){
