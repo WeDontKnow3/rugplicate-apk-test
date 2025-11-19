@@ -28,6 +28,27 @@ export async function register(username, password, captchaToken, adminSecret = n
   }
 }
 
+export async function getDailyStatus(){
+  try{
+    const res = await fetch(`${API_BASE}/api/daily/status`, { headers: { ...authHeaders() } });
+    return await safeJson(res);
+  }catch(e){
+    return { error: e.message || "network_error" };
+  }
+}
+
+export async function claimDailyReward(){
+  try{
+    const res = await fetch(`${API_BASE}/api/daily/claim`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() }
+    });
+    return await safeJson(res);
+  }catch(e){
+    return { error: e.message || "network_error" };
+  }
+}
+
 export async function login(username, password){
   try{
     const res = await fetch(`${API_BASE}/api/login`, {
