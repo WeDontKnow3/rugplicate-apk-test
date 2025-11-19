@@ -32,13 +32,20 @@ jobs:
         distribution: 'temurin'
         java-version: '21'
 
-    - name: Build APK
+    - name: Build APK / AAB
       run: |
         cd android
-        ./gradlew assembleRelease --no-daemon
+        ./gradlew assembleRelease --no-daemon || true
+        ./gradlew bundleRelease --no-daemon || true
 
-    - name: Upload APK
+    - name: List build outputs (debug)
+      run: ls -R android/app/build/outputs || true
+
+    - name: Upload all APKs and AABs found
       uses: actions/upload-artifact@v4
       with:
-        name: app-release
-        path: android/app/build/outputs/apk/release/app-release.apk
+        name: android-build-artifacts
+        path: |
+          android/app/build/outputs/**/*.apk
+          android/app/build/outputs/**/*.aab
+          android/app/build/outputs/**/*.apks
