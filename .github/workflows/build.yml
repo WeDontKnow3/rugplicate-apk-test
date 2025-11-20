@@ -17,6 +17,12 @@ jobs:
       with:
         node-version: 20
 
+    - name: Create .env from secret (reCAPTCHA)
+      run: |
+        echo "VITE_RECAPTCHA_SITE_KEY=${{ secrets.RECAPTCHA_SITE_KEY }}" > .env
+        # ensure .env is not accidentally committed in the job workspace
+        git status --porcelain || true
+
     - name: Install dependencies
       run: npm install
 
