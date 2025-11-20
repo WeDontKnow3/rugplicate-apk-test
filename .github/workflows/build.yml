@@ -1,52 +1,50 @@
 name: Build Android APK
-
 on:
   push:
     branches: [ "main" ]
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
+    
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: 20
-
+    
     - name: Create .env from secret (reCAPTCHA)
       run: |
         echo "VITE_RECAPTCHA_SITE_KEY=${{ secrets.RECAPTCHA_SITE_KEY }}" > .env
-        # ensure .env is not accidentally committed in the job workspace
-        git status --porcelain || true
-
+        cat .env
+    
     - name: Install dependencies
       run: npm install
-
+    
     - name: Build web
       run: npm run build
-
-    - name: Copy build to Capacitor
-      run: npx cap copy
-
+      env:
+        VITE_RECAPTCHA_SITE_KEY: ${{ secrets.RECAPTCHA_SITE_KEY }}
+    
+    - name: Sync Capacitor
+      run: npx cap sync
+    
     - name: Setup Java (Java 21)
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '21'
-
+    
     - name: Build APK / AAB
       run: |
         cd android
         ./gradlew assembleRelease --no-daemon || true
         ./gradlew bundleRelease --no-daemon || true
-
+    
     - name: List build outputs (debug)
       run: ls -R android/app/build/outputs || true
-
+    
     - name: Upload all APKs and AABs found
       uses: actions/upload-artifact@v4
       with:
